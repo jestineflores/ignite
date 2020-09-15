@@ -1,6 +1,8 @@
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:ignite/screens/login_page.dart';
+import 'package:ignite/screens/registration_page.dart';
+
 import 'dart:io';
 
 import './screens/mainpage.dart';
@@ -40,7 +42,12 @@ class MyApp extends StatelessWidget {
         primarySwatch: Colors.green,
       ),
       debugShowCheckedModeBanner: false,
-      home: LoginPage(),
+      initialRoute: RegistrationPage.id,
+      routes: {
+        RegistrationPage.id: (context) => RegistrationPage(),
+        LoginPage.id: (context) => LoginPage(),
+        MainPage.id: (context) => MainPage(),
+      },
     );
   }
 }
