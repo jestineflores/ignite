@@ -1,5 +1,8 @@
+import 'dart:async';
+
 import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/material.dart';
+import 'package:google_maps_flutter/google_maps_flutter.dart';
 
 class MainPage extends StatefulWidget {
   static const String id = 'mainpage';
@@ -8,24 +11,28 @@ class MainPage extends StatefulWidget {
 }
 
 class _MainPageState extends State<MainPage> {
+  Completer<GoogleMapController> _controller = Completer();
+  GoogleMapController mapController;
+  static final CameraPosition _kGooglePlex =
+      CameraPosition(target: LatLng(39.765030, -105.032480), zoom: 14.4746);
   @override
   Widget build(BuildContext context) {
     return Scaffold(
         appBar: AppBar(
           title: Text('Main Page'),
         ),
-        body: Center(
-          child: MaterialButton(
-            onPressed: () {
-              DatabaseReference dbref =
-                  FirebaseDatabase.instance.reference().child('Test');
-              dbref.set('Is Connected');
-            },
-            height: 50,
-            minWidth: 300,
-            color: Colors.green,
-            child: Text('Test Connection'),
-          ),
+        body: Stack(
+          children: <Widget>[
+            GoogleMap(
+              mapType: MapType.normal,
+              myLocationButtonEnabled: true,
+              initialCameraPosition: _kGooglePlex,
+              onMapCreated: (GoogleMapController controller) {
+                _controller.complete(controller);
+                mapController = controller;
+              },
+            )
+          ],
         ));
   }
 }
