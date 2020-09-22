@@ -1,7 +1,9 @@
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
+import 'package:ignite/dataproviders/appdata.dart';
 import 'package:ignite/screens/login_page.dart';
 import 'package:ignite/screens/registration_page.dart';
+import 'package:provider/provider.dart';
 
 import 'dart:io';
 
@@ -35,19 +37,22 @@ class MyApp extends StatelessWidget {
   // This widget is the root of your application.
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'Ignite',
-      theme: ThemeData(
-        fontFamily: "Brand-Regular",
-        primarySwatch: Colors.green,
+    return ChangeNotifierProvider(
+      create: (context) => AppData(),
+      child: MaterialApp(
+        title: 'Ignite',
+        theme: ThemeData(
+          fontFamily: "Brand-Regular",
+          // primarySwatch: Colors.green[800],
+        ),
+        debugShowCheckedModeBanner: false,
+        initialRoute: MainPage.id,
+        routes: {
+          RegistrationPage.id: (context) => RegistrationPage(),
+          LoginPage.id: (context) => LoginPage(),
+          MainPage.id: (context) => MainPage(),
+        },
       ),
-      debugShowCheckedModeBanner: false,
-      initialRoute: MainPage.id,
-      routes: {
-        RegistrationPage.id: (context) => RegistrationPage(),
-        LoginPage.id: (context) => LoginPage(),
-        MainPage.id: (context) => MainPage(),
-      },
     );
   }
 }

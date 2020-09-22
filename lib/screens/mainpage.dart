@@ -1,12 +1,18 @@
 import 'dart:async';
+import 'package:flutter_polyline_points/flutter_polyline_points.dart';
+import 'package:ignite/dataproviders/appdata.dart';
+import 'package:ignite/helpers/helpermethods.dart';
+import 'package:ignite/screens/searchpage.dart';
 import 'package:ignite/styles/styles.dart';
 import 'package:ignite/widgets/BrandDivider.dart';
+import 'package:ignite/widgets/ProgressDialog.dart';
 import 'package:outline_material_icons/outline_material_icons.dart';
 import 'dart:io';
 import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:geolocator/geolocator.dart';
+import 'package:provider/provider.dart';
 
 class MainPage extends StatefulWidget {
   static const String id = 'mainpage';
@@ -21,6 +27,11 @@ class _MainPageState extends State<MainPage> {
   GoogleMapController mapController;
   double mapButtonPadding = 0;
 
+  List<LatLng> polylineCoordinates = [];
+  Set<Polyline> _polylines = {};
+  Set<Marker> _Markers = {};
+  Set<Circle> _Circles = {};
+
   var geolocator = Geolocator();
   Position currentPosition;
 
@@ -32,6 +43,10 @@ class _MainPageState extends State<MainPage> {
     LatLng pos = LatLng(position.latitude, position.longitude);
     CameraPosition cp = new CameraPosition(target: pos, zoom: 14);
     mapController.animateCamera(CameraUpdate.newCameraPosition(cp));
+
+    String address =
+        await HelperMethods.findCoordinateAddress(position, context);
+    print(address);
   }
 
   static final CameraPosition _kGooglePlex =
@@ -123,6 +138,12 @@ class _MainPageState extends State<MainPage> {
               mapType: MapType.normal,
               myLocationButtonEnabled: true,
               initialCameraPosition: _kGooglePlex,
+              myLocationEnabled: true,
+              zoomGesturesEnabled: true,
+              zoomControlsEnabled: true,
+              polylines: _polylines,
+              markers: _Markers,
+              circles: _Circles,
               onMapCreated: (GoogleMapController controller) {
                 _controller.complete(controller);
                 mapController = controller;
@@ -203,31 +224,42 @@ class _MainPageState extends State<MainPage> {
                               TextStyle(fontSize: 18, fontFamily: 'Brand-Bold'),
                         ),
                         SizedBox(height: 20),
-                        Container(
-                          decoration: BoxDecoration(
-                              color: Colors.white,
-                              borderRadius: BorderRadius.circular(4),
-                              boxShadow: [
-                                BoxShadow(
-                                  color: Colors.black12,
-                                  blurRadius: 5,
-                                  spreadRadius: 0.5,
-                                  offset: Offset(0.7, 0.7),
-                                ),
-                              ]),
-                          child: Padding(
-                            padding: EdgeInsets.all(12),
-                            child: Row(
-                              children: <Widget>[
-                                Icon(
-                                  OMIcons.search,
-                                  color: Colors.green[800],
-                                ),
-                                SizedBox(
-                                  width: 10,
-                                ),
-                                Text('Search Destination'),
-                              ],
+                        GestureDetector(
+                          onTap: () async {
+                            var response = await Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                    builder: (context) => SearchPage()));
+                            if (response == 'getDirection') {
+                              await getDirection();
+                            }
+                          },
+                          child: Container(
+                            decoration: BoxDecoration(
+                                color: Colors.white,
+                                borderRadius: BorderRadius.circular(4),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: Colors.black12,
+                                    blurRadius: 5,
+                                    spreadRadius: 0.5,
+                                    offset: Offset(0.7, 0.7),
+                                  ),
+                                ]),
+                            child: Padding(
+                              padding: EdgeInsets.all(12),
+                              child: Row(
+                                children: <Widget>[
+                                  Icon(
+                                    OMIcons.search,
+                                    color: Colors.green[800],
+                                  ),
+                                  SizedBox(
+                                    width: 10,
+                                  ),
+                                  Text('Search Destination'),
+                                ],
+                              ),
                             ),
                           ),
                         ),
@@ -291,5 +323,114 @@ class _MainPageState extends State<MainPage> {
             ),
           ],
         ));
+  }
+
+  Future<void> getDirection() async {
+    var pickup = Provider.of<AppData>(context, listen: false).pickupAddress;
+    var destination =
+        Provider.of<AppData>(context, listen: false).destinationAddress;
+    var pickLatLng = LatLng(pickup.latitude, pickup.longitude);
+    var destinationLatLng = LatLng(destination.latitude, destination.longitude);
+
+    showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (BuildContext context) =>
+            ProgressDialog(status: 'One second'));
+
+    var thisDetails =
+        await HelperMethods.getDirectionDetails(pickLatLng, destinationLatLng);
+
+    Navigator.pop(context);
+
+    PolylinePoints polylinePoints = PolylinePoints();
+    List<PointLatLng> results =
+        polylinePoints.decodePolyline(thisDetails.encodedPoints);
+    polylineCoordinates.clear();
+    if (results.isNotEmpty) {
+      results.forEach((PointLatLng point) {
+        polylineCoordinates.add(LatLng(point.latitude, point.longitude));
+      });
+    }
+
+    _polylines.clear();
+
+    setState(() {
+      Polyline polyline = Polyline(
+        polylineId: PolylineId('polyid'),
+        color: Colors.purple[600],
+        points: polylineCoordinates,
+        jointType: JointType.round,
+        width: 4,
+        startCap: Cap.roundCap,
+        endCap: Cap.roundCap,
+        geodesic: true,
+      );
+
+      _polylines.add(polyline);
+    });
+
+    LatLngBounds bounds;
+
+    if (pickLatLng.latitude > destinationLatLng.latitude &&
+        pickLatLng.longitude > destinationLatLng.longitude) {
+      bounds =
+          LatLngBounds(southwest: destinationLatLng, northeast: pickLatLng);
+    } else if (pickLatLng.longitude > destinationLatLng.longitude) {
+      bounds = LatLngBounds(
+          southwest: LatLng(pickLatLng.latitude, destinationLatLng.longitude),
+          northeast: LatLng(destinationLatLng.latitude, pickLatLng.longitude));
+    } else if (pickLatLng.latitude > destinationLatLng.latitude) {
+      bounds = LatLngBounds(
+        southwest: LatLng(destinationLatLng.latitude, pickLatLng.longitude),
+        northeast: LatLng(pickLatLng.latitude, destinationLatLng.longitude),
+      );
+    } else {
+      bounds =
+          LatLngBounds(southwest: pickLatLng, northeast: destinationLatLng);
+    }
+
+    mapController.animateCamera(CameraUpdate.newLatLngBounds(bounds, 70));
+
+    Marker pickupMarker = Marker(
+      markerId: MarkerId('pickup'),
+      position: pickLatLng,
+      icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueGreen),
+      infoWindow: InfoWindow(title: pickup.placeName, snippet: 'My Location'),
+    );
+
+    Marker destinationMarker = Marker(
+      markerId: MarkerId('destination'),
+      position: destinationLatLng,
+      icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueRed),
+      infoWindow:
+          InfoWindow(title: destination.placeName, snippet: 'Destination'),
+    );
+
+    setState(() {
+      _Markers.add(pickupMarker);
+      _Markers.add(destinationMarker);
+    });
+
+    Circle pickupCircle = Circle(
+        circleId: CircleId('pickup'),
+        strokeColor: Colors.green,
+        strokeWidth: 3,
+        radius: 12,
+        center: pickLatLng,
+        fillColor: Colors.green[800]);
+
+    Circle destinationCircle = Circle(
+        circleId: CircleId('destination'),
+        strokeColor: Colors.green,
+        strokeWidth: 3,
+        radius: 12,
+        center: destinationLatLng,
+        fillColor: Colors.purple[600]);
+
+    setState(() {
+      _Circles.add(pickupCircle);
+      _Circles.add(destinationCircle);
+    });
   }
 }
