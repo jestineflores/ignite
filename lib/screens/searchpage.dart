@@ -64,7 +64,7 @@ class _SearchPageState extends State<SearchPage> {
         body: Column(
       children: <Widget>[
         Container(
-            height: 220,
+            height: 203,
             decoration: BoxDecoration(color: Colors.white, boxShadow: [
               BoxShadow(
                 color: Colors.black12,
@@ -118,7 +118,7 @@ class _SearchPageState extends State<SearchPage> {
                                         border: InputBorder.none,
                                         isDense: true,
                                         contentPadding: EdgeInsets.only(
-                                            left: 10, top: 10, bottom: 8))),
+                                            left: 10, top: 10, bottom: 1))),
                               ))),
                     ],
                   ),
@@ -148,7 +148,7 @@ class _SearchPageState extends State<SearchPage> {
                                         border: InputBorder.none,
                                         isDense: true,
                                         contentPadding: EdgeInsets.only(
-                                            left: 10, top: 10, bottom: 8))),
+                                            left: 10, top: 10, bottom: 1))),
                               ))),
                     ],
                   ),
