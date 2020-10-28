@@ -46,7 +46,7 @@ class MyApp extends StatelessWidget {
           // primarySwatch: Colors.green[800],
         ),
         debugShowCheckedModeBanner: false,
-        initialRoute: RegistrationPage.id,
+        initialRoute: MainPage.id,
         routes: {
           RegistrationPage.id: (context) => RegistrationPage(),
           LoginPage.id: (context) => LoginPage(),

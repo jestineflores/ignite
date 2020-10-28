@@ -66,4 +66,14 @@ class HelperMethods {
 
     return directionDetails;
   }
+
+  static int estimateFares(DirectionDetails details) {
+    double baseFare = 12;
+    double distanceFare = (details.distanceValue / 5128) * 1.5;
+    double timeFare = (details.durationValue / 60) * 1;
+
+    double totalFare = baseFare + distanceFare + timeFare;
+
+    return totalFare.truncate();
+  }
 }
