@@ -18,6 +18,8 @@ import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:provider/provider.dart';
 
+import '../globalvariable.dart';
+
 class MainPage extends StatefulWidget {
   static const String id = 'mainpage';
   @override
@@ -43,6 +45,8 @@ class _MainPageState extends State<MainPage> with TickerProviderStateMixin {
 
   DirectionDetails tripDirectionDetails;
 
+  bool drawerCanOpen = true;
+
   void setupPositionLocator() async {
     Position position = await geolocator.getCurrentPosition(
         desiredAccuracy: LocationAccuracy.bestForNavigation);
@@ -57,9 +61,6 @@ class _MainPageState extends State<MainPage> with TickerProviderStateMixin {
     print(address);
   }
 
-  static final CameraPosition _kGooglePlex =
-      CameraPosition(target: LatLng(39.765030, -105.032480), zoom: 14.4746);
-
   void showDetailSheet() async {
     await getDirection();
 
@@ -67,6 +68,7 @@ class _MainPageState extends State<MainPage> with TickerProviderStateMixin {
       searchSheetHeight = 0;
       rideDetailsSheetHeight = (Platform.isAndroid) ? 235 : 260;
       mapBottomPadding = (Platform.isAndroid) ? 240 : 230;
+      drawerCanOpen = false;
     });
   }
 
@@ -156,7 +158,7 @@ class _MainPageState extends State<MainPage> with TickerProviderStateMixin {
               padding: EdgeInsets.only(bottom: mapBottomPadding),
               mapType: MapType.normal,
               myLocationButtonEnabled: true,
-              initialCameraPosition: _kGooglePlex,
+              initialCameraPosition: googlePlex,
               myLocationEnabled: true,
               zoomGesturesEnabled: true,
               zoomControlsEnabled: true,
@@ -179,7 +181,11 @@ class _MainPageState extends State<MainPage> with TickerProviderStateMixin {
               left: 20,
               child: GestureDetector(
                 onTap: () {
-                  scaffoldKey.currentState.openDrawer();
+                  if (drawerCanOpen) {
+                    scaffoldKey.currentState.openDrawer();
+                  } else {
+                    resetApp();
+                  }
                 },
                 child: Container(
                   decoration: BoxDecoration(
@@ -197,7 +203,7 @@ class _MainPageState extends State<MainPage> with TickerProviderStateMixin {
                     backgroundColor: Colors.white,
                     radius: 20,
                     child: Icon(
-                      Icons.menu,
+                      (drawerCanOpen) ? Icons.menu : Icons.arrow_back,
                       color: Colors.black87,
                     ),
                   ),
@@ -564,5 +570,19 @@ class _MainPageState extends State<MainPage> with TickerProviderStateMixin {
       _Circles.add(pickupCircle);
       _Circles.add(destinationCircle);
     });
+  }
+
+  resetApp() {
+    setState(() {
+      polylineCoordinates.clear();
+      _polylines.clear();
+      _Markers.clear();
+      _Circles.clear();
+      rideDetailsSheetHeight = 0;
+      searchSheetHeight = (Platform.isAndroid) ? 275 : 300;
+      mapBottomPadding = (Platform.isAndroid) ? 280 : 270;
+      drawerCanOpen = true;
+    });
+    setupPositionLocator();
   }
 }
