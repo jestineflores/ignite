@@ -28,16 +28,16 @@ class _SearchPageState extends State<SearchPage> {
     }
   }
 
-  var focusPickup = FocusNode();
+  // var focusPickup = FocusNode();
 
-  bool focused2 = false;
+  // bool focused2 = false;
 
-  void setFocus2() {
-    if (!focused2) {
-      FocusScope.of(context).requestFocus(focusPickup);
-      focused2 = true;
-    }
-  }
+  // void setFocus2() {
+  //   if (!focused2) {
+  //     FocusScope.of(context).requestFocus(focusPickup);
+  //     focused2 = true;
+  //   }
+  // }
 
   List<Prediction> destinationPredictionList = [];
 
@@ -64,30 +64,30 @@ class _SearchPageState extends State<SearchPage> {
     }
   }
 
-  List<Prediction> pickupPredictionList = [];
+  // List<Prediction> pickupPredictionList = [];
 
-  void searchPlace2(String placeName) async {
-    if (placeName.length > 1) {
-      String url =
-          'https://maps.googleapis.com/maps/api/place/autocomplete/json?input=$placeName&key=$mapKey&sessiontoken=123254251&components=country:us';
+  // void searchPlace2(String placeName) async {
+  //   if (placeName.length > 1) {
+  //     String url =
+  //         'https://maps.googleapis.com/maps/api/place/autocomplete/json?input=$placeName&key=$mapKey&sessiontoken=123254251&components=country:us';
 
-      var response = await RequestHelper.getRequest(url);
+  //     var response = await RequestHelper.getRequest(url);
 
-      if (response == 'failed') {
-        return;
-      }
-      if (response['status'] == 'OK') {
-        var predictionJson = response['predictions'];
-        var thisList = (predictionJson as List)
-            .map((e) => Prediction.fromJson(e))
-            .toList();
+  //     if (response == 'failed') {
+  //       return;
+  //     }
+  //     if (response['status'] == 'OK') {
+  //       var predictionJson = response['predictions'];
+  //       var thisList = (predictionJson as List)
+  //           .map((e) => Prediction.fromJson(e))
+  //           .toList();
 
-        setState(() {
-          pickupPredictionList = thisList;
-        });
-      }
-    }
-  }
+  //       setState(() {
+  //         pickupPredictionList = thisList;
+  //       });
+  //     }
+  //   }
+  // }
 
   @override
   Widget build(BuildContext context) {
@@ -149,7 +149,7 @@ class _SearchPageState extends State<SearchPage> {
                                 padding: EdgeInsets.all(2.0),
                                 child: TextField(
                                     onChanged: (value) {
-                                      searchPlace2(value);
+                                      searchPlace(value);
                                     },
                                     // focusNode: focusPickup,
                                     controller: pickupController,
@@ -197,24 +197,24 @@ class _SearchPageState extends State<SearchPage> {
                 ],
               ),
             )),
-        (pickupPredictionList.length > 0)
-            ? Padding(
-                padding: EdgeInsets.symmetric(vertical: 8, horizontal: 16),
-                child: ListView.separated(
-                  padding: EdgeInsets.all(0),
-                  itemBuilder: (context, index) {
-                    return PredictionTile(
-                      prediction: pickupPredictionList[index],
-                    );
-                  },
-                  separatorBuilder: (BuildContext context, int index) =>
-                      BrandDivider(),
-                  itemCount: pickupPredictionList.length,
-                  shrinkWrap: true,
-                  physics: ClampingScrollPhysics(),
-                ),
-              )
-            : Container(),
+        // (pickupPredictionList.length > 0)
+        //     ? Padding(
+        //         padding: EdgeInsets.symmetric(vertical: 8, horizontal: 16),
+        //         child: ListView.separated(
+        //           padding: EdgeInsets.all(0),
+        //           itemBuilder: (context, index) {
+        //             return PredictionTile(
+        //               prediction: pickupPredictionList[index],
+        //             );
+        //           },
+        //           separatorBuilder: (BuildContext context, int index) =>
+        //               BrandDivider(),
+        //           itemCount: pickupPredictionList.length,
+        //           shrinkWrap: true,
+        //           physics: ClampingScrollPhysics(),
+        //         ),
+        //       )
+        //     : Container(),
         (destinationPredictionList.length > 0)
             ? Padding(
                 padding: EdgeInsets.symmetric(vertical: 8, horizontal: 16),

@@ -17,6 +17,7 @@ import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:provider/provider.dart';
+import 'package:animated_text_kit/animated_text_kit.dart';
 
 import '../globalvariable.dart';
 
@@ -29,7 +30,8 @@ class MainPage extends StatefulWidget {
 class _MainPageState extends State<MainPage> with TickerProviderStateMixin {
   GlobalKey<ScaffoldState> scaffoldKey = new GlobalKey<ScaffoldState>();
   double searchSheetHeight = (Platform.isIOS) ? 300 : 275;
-  double rideDetailsSheetHeight = 0;
+  double rideDetailsSheetHeight = 0; // (Platform.isAndroid) ? 235 : 260
+  double requestSheetHeight = 0; // (Platform.isAndroid) ? 195 : 220
 
   Completer<GoogleMapController> _controller = Completer();
   GoogleMapController mapController;
@@ -46,6 +48,8 @@ class _MainPageState extends State<MainPage> with TickerProviderStateMixin {
   DirectionDetails tripDirectionDetails;
 
   bool drawerCanOpen = true;
+
+  DatabaseReference rideRef;
 
   void setupPositionLocator() async {
     Position position = await geolocator.getCurrentPosition(
@@ -70,6 +74,24 @@ class _MainPageState extends State<MainPage> with TickerProviderStateMixin {
       mapBottomPadding = (Platform.isAndroid) ? 240 : 230;
       drawerCanOpen = false;
     });
+  }
+
+  void showRequestSheet() {
+    setState(() {
+      rideDetailsSheetHeight = 0;
+      requestSheetHeight = (Platform.isAndroid) ? 195 : 220;
+      mapBottomPadding = (Platform.isAndroid) ? 200 : 190;
+
+      drawerCanOpen = true;
+    });
+
+    createRideRequest();
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    HelperMethods.getCurrentUserInfo();
   }
 
   @override
@@ -161,7 +183,10 @@ class _MainPageState extends State<MainPage> with TickerProviderStateMixin {
               initialCameraPosition: googlePlex,
               myLocationEnabled: true,
               zoomGesturesEnabled: true,
-              zoomControlsEnabled: true,
+              zoomControlsEnabled: false,
+              // trafficEnabled: true,
+              tiltGesturesEnabled: true,
+              scrollGesturesEnabled: true,
               polylines: _polylines,
               markers: _Markers,
               circles: _Circles,
@@ -376,15 +401,14 @@ class _MainPageState extends State<MainPage> with TickerProviderStateMixin {
                     ),
                     height: rideDetailsSheetHeight,
                     child: Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 18),
+                      padding: EdgeInsets.symmetric(vertical: 18),
                       child: Column(
                         children: <Widget>[
                           Container(
                             width: double.infinity,
                             color: Colors.white,
                             child: Padding(
-                              padding:
-                                  const EdgeInsets.symmetric(horizontal: 16),
+                              padding: EdgeInsets.symmetric(horizontal: 16),
                               child: Row(
                                 children: <Widget>[
                                   Image.asset('images/sprinter4.png',
@@ -426,18 +450,18 @@ class _MainPageState extends State<MainPage> with TickerProviderStateMixin {
                           ),
                           SizedBox(height: 22),
                           Padding(
-                            padding: const EdgeInsets.symmetric(horizontal: 16),
+                            padding: EdgeInsets.symmetric(horizontal: 16),
                             child: Row(children: <Widget>[
                               Icon(
                                 FontAwesomeIcons.moneyBillAlt,
                                 size: 18,
-                                color: Colors.lime[500],
+                                color: Colors.lime,
                               ),
                               SizedBox(width: 16),
                               Text('Cash'),
                               SizedBox(width: 5),
                               Icon(Icons.keyboard_arrow_down,
-                                  color: Colors.lime[500], size: 16),
+                                  color: Colors.lime, size: 16),
                             ]),
                           ),
                           SizedBox(height: 22),
@@ -446,7 +470,9 @@ class _MainPageState extends State<MainPage> with TickerProviderStateMixin {
                             child: TaxiButton(
                               title: "Request Ride",
                               color: Colors.green[700],
-                              onPressed: () {},
+                              onPressed: () {
+                                showRequestSheet();
+                              },
                             ),
                           ),
                         ],
@@ -454,6 +480,89 @@ class _MainPageState extends State<MainPage> with TickerProviderStateMixin {
                     )),
               ),
             ),
+            Positioned(
+              left: 0,
+              right: 0,
+              bottom: 0,
+              child: AnimatedSize(
+                vsync: this,
+                duration: new Duration(milliseconds: 150),
+                curve: Curves.easeIn,
+                child: Container(
+                    decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.only(
+                            topLeft: Radius.circular(15),
+                            topRight: Radius.circular(15)),
+                        boxShadow: [
+                          BoxShadow(
+                            blurRadius: 15,
+                            color: Colors.green[700],
+                            spreadRadius: 0.5,
+                            offset: Offset(0.7, 0.7),
+                          ),
+                        ]),
+                    height: requestSheetHeight,
+                    child: Padding(
+                      padding:
+                          EdgeInsets.symmetric(horizontal: 24, vertical: 18),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.center,
+                        children: <Widget>[
+                          SizedBox(height: 10),
+                          SizedBox(
+                            child: LinearProgressIndicator(
+                              backgroundColor: Colors.green[800],
+                              valueColor: AlwaysStoppedAnimation(
+                                Colors.grey[600],
+                              ),
+                            ),
+                            width: double.infinity,
+                          ),
+                          Text(
+                            'Requesting Ride...',
+                            style: TextStyle(
+                                fontSize: 21, fontFamily: 'Brand-Bold'),
+                          ),
+                          SizedBox(
+                            height: 20,
+                          ),
+                          GestureDetector(
+                            onTap: () {
+                              cancelRequest();
+                              resetApp();
+                            },
+                            child: Container(
+                              height: 50,
+                              width: 50,
+                              decoration: BoxDecoration(
+                                color: Colors.white,
+                                borderRadius: BorderRadius.circular(25),
+                                border: Border.all(
+                                    width: 1, color: Colors.green[200]),
+                              ),
+                              child: Icon(
+                                Icons.close,
+                                size: 25,
+                              ),
+                            ),
+                          ),
+                          SizedBox(
+                            height: 10,
+                          ),
+                          Container(
+                            width: double.infinity,
+                            child: Text(
+                              'Cancel Ride',
+                              textAlign: TextAlign.center,
+                              style: TextStyle(fontSize: 12),
+                            ),
+                          ),
+                        ],
+                      ),
+                    )),
+              ),
+            )
           ],
         ));
   }
@@ -572,6 +681,42 @@ class _MainPageState extends State<MainPage> with TickerProviderStateMixin {
     });
   }
 
+  void createRideRequest() {
+    rideRef = FirebaseDatabase.instance.reference().child('rideRequest').push();
+
+    var pickup = Provider.of<AppData>(context, listen: false).pickupAddress;
+    var destination =
+        Provider.of<AppData>(context, listen: false).destinationAddress;
+
+    Map pickupMap = {
+      'latitude': pickup.latitude.toString(),
+      'longitude': pickup.longitude.toString(),
+    };
+
+    Map destinationMap = {
+      'latitude': destination.latitude.toString(),
+      'longitude': destination.longitude.toString(),
+    };
+
+    Map rideMap = {
+      'created_at': DateTime.now().toString(),
+      'rider_name': currentUserInfo.fullName,
+      'rider_phone': currentUserInfo.phone,
+      'pickup_address': pickup.placeName,
+      'destination_address': destination.placeName,
+      'location': pickupMap,
+      'destination': destinationMap,
+      'payment_method': 'card',
+      'driver_id': 'waiting',
+    };
+
+    rideRef.set(rideMap);
+  }
+
+  void cancelRequest() {
+    rideRef.remove();
+  }
+
   resetApp() {
     setState(() {
       polylineCoordinates.clear();
@@ -579,6 +724,7 @@ class _MainPageState extends State<MainPage> with TickerProviderStateMixin {
       _Markers.clear();
       _Circles.clear();
       rideDetailsSheetHeight = 0;
+      requestSheetHeight = 0;
       searchSheetHeight = (Platform.isAndroid) ? 275 : 300;
       mapBottomPadding = (Platform.isAndroid) ? 280 : 270;
       drawerCanOpen = true;

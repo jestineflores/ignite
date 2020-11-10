@@ -1,5 +1,8 @@
 import 'package:connectivity/connectivity.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_database/firebase_database.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
+import 'package:ignite/datamodels/account.dart';
 import 'package:ignite/datamodels/address.dart';
 import 'package:ignite/datamodels/directiondetails.dart';
 import 'package:ignite/dataproviders/appdata.dart';
@@ -7,8 +10,23 @@ import '../globalvariable.dart';
 import 'package:geolocator/geolocator.dart';
 import './requesthelper.dart';
 import 'package:provider/provider.dart';
+import '../datamodels/account.dart';
 
 class HelperMethods {
+  static void getCurrentUserInfo() async {
+    currentFirebaseUser = FirebaseAuth.instance.currentUser;
+    String userid = currentFirebaseUser.uid;
+
+    DatabaseReference userRef =
+        FirebaseDatabase.instance.reference().child('users/$userid');
+    userRef.once().then((DataSnapshot snapshot) {
+      if (snapshot.value != null) {
+        currentUserInfo = Account.fromSnapshot(snapshot);
+        print('My name is ${currentUserInfo.fullName}');
+      }
+    });
+  }
+
   static Future<String> findCoordinateAddress(
       Position position, context) async {
     String placeAddress = '';
